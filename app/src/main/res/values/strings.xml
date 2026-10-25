@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ثبت بارکد</string>
+
+    <!-- صفحهٔ فایل‌ها -->
+    <string name="new_file">+ فایل جدید</string>
+    <string name="no_files">هنوز فایلی ندارید.\nبا دکمهٔ «فایل جدید» شروع کنید.</string>
+    <string name="new_file_title">فایل جدید</string>
+    <string name="file_name_hint">نام فایل</string>
+    <string name="rename_file">تغییر نام</string>
+    <string name="delete">حذف</string>
+    <string name="ok">تأیید</string>
+    <string name="cancel">انصراف</string>
+    <string name="file_info">%1$d رکورد  •  %2$s</string>
+    <string name="default_file_prefix">فایل</string>
+    <string name="delete_file_title">حذف فایل</string>
+    <string name="delete_file_msg">فایل «%1$s» و همهٔ رکوردهای آن حذف می‌شود. ادامه می‌دهید؟</string>
+
+    <!-- صفحهٔ رکوردها -->
+    <string name="add_record">+ ثبت جدید (اسکن بارکد)</string>
+    <string name="records_count">تعداد رکوردها: %1$d</string>
+    <string name="no_records">هنوز رکوردی ثبت نشده است.</string>
+    <string name="share_excel">اشتراک اکسل</string>
+    <string name="save_excel">ذخیره اکسل</string>
+    <string name="share_chooser">اشتراک‌گذاری فایل اکسل</string>
+    <string name="nothing_to_export">ابتدا حداقل یک رکورد ثبت کنید.</string>
+    <string name="export_failed">ساخت فایل اکسل ناموفق بود.</string>
+    <string name="saved_ok">فایل ذخیره شد.</string>
+    <string name="no_name">(بدون نام)</string>
+
+    <!-- فرم -->
+    <string name="form_title_new">ثبت جدید</string>
+    <string name="form_title_edit">ویرایش رکورد</string>
+    <string name="hint_barcode">بارکد</string>
+    <string name="scan">اسکن</string>
+    <string name="scan_prompt">بارکد را داخل کادر قرار دهید (چراغ: کلید صدا)</string>
+    <string name="format_label">نوع بارکد: %1$s</string>
+    <string name="format_manual">ورود دستی</string>
+    <string name="hint_first_name">نام</string>
+    <string name="hint_last_name">نام خانوادگی</string>
+    <string name="hint_package">نوع بسته</string>
+    <string name="hint_description">توضیحات</string>
+    <string name="hint_phone">شماره تلفن</string>
+    <string name="save">ثبت</string>
+    <string name="save_next">ثبت و اسکن بعدی</string>
+    <string name="barcode_required">بارکد را اسکن یا وارد کنید.</string>
+    <string name="duplicate_title">بارکد تکراری</string>
+    <string name="duplicate_msg">این بارکد قبلاً در همین فایل ثبت شده است. باز هم ثبت شود؟</string>
+    <string name="record_saved">ثبت شد.</string>
+    <string name="delete_record_title">حذف رکورد</string>
+    <string name="delete_record_msg">این رکورد حذف شود؟</string>
+
+    <string-array name="default_packages">
+        <item>پاکت</item>
+        <item>کارتن</item>
+        <item>جعبه</item>
+        <item>کیسه</item>
+        <item>بسته</item>
+    </string-array>
+
+    <!-- سرستون‌های اکسل -->
+    <string-array name="excel_headers">
+        <item>ردیف</item>
+        <item>بارکد</item>
+        <item>نوع بارکد</item>
+        <item>نام</item>
+        <item>نام خانوادگی</item>
+        <item>نوع بسته</item>
+        <item>توضیحات</item>
+        <item>شماره تلفن</item>
+        <item>تاریخ ثبت</item>
+    </string-array>
+</resources>
