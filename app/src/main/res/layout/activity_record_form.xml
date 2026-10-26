@@ -144,12 +144,35 @@
                         android:textSize="15sp"
                         app:fontFamily="@font/vazirmatn_black" />
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.App.TextInput"
+                    <!-- تایپ صوتی (اختیاری) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVoice"
+                        style="?attr/materialButtonOutlinedStyle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
+                        android:text="ورود صوتی مرحله‌ای (نام، بسته، تلفن، توضیحات)"
+                        app:icon="@drawable/ic_mic"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/primary" />
+
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cbAutoVoice"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="بعد از اسکن، ورود صوتی خودکار شروع شود"
+                        android:textColor="@color/muted"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilName"
+                        style="@style/Widget.App.TextInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:hint="@string/hint_name"
+                        app:endIconDrawable="@drawable/ic_mic"
+                        app:endIconMode="custom"
                         app:startIconDrawable="@drawable/ic_person">
 
                         <com.google.android.material.textfield.TextInputEditText
@@ -178,30 +201,38 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPhone"
                         style="@style/Widget.App.TextInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:hint="@string/hint_phone"
+                        app:endIconDrawable="@drawable/ic_mic"
+                        app:endIconMode="custom"
+                        app:helperText="موبایل: ۱۱ رقم و شروع با 09"
                         app:startIconDrawable="@drawable/ic_phone">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPhone"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩+-() "
+                            android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
                             android:imeOptions="actionNext"
                             android:inputType="phone"
+                            android:maxLength="11"
                             android:singleLine="true"
                             android:textDirection="ltr" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilDesc"
                         style="@style/Widget.App.TextInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:hint="@string/hint_description"
+                        app:endIconDrawable="@drawable/ic_mic"
+                        app:endIconMode="custom"
                         app:startIconDrawable="@drawable/ic_notes">
 
                         <com.google.android.material.textfield.TextInputEditText

@@ -10,29 +10,77 @@ public final class Util {
         StringBuilder sb = new StringBuilder(s.length());
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (c >= '\u06F0' && c <= '\u06F9') sb.append((char) ('0' + (c - '\u06F0')));
-            else if (c >= '\u0660' && c <= '\u0669') sb.append((char) ('0' + (c - '\u0660')));
+            if (c >= '۰' && c <= '۹') sb.append((char) ('0' + (c - '۰')));
+            else if (c >= '٠' && c <= '٩') sb.append((char) ('0' + (c - '٠')));
             else sb.append(c);
         }
         return sb.toString();
     }
 
     /**
-     * شمارهٔ موبایل ایران را بررسی و به قالب استاندارد 09xxxxxxxxx تبدیل می‌کند.
-     * قالب‌های پذیرفته‌شده: 09123456789 ، 9123456789 ، 989123456789 ،
-     * +989123456789 ، 00989123456789 (با فاصله، خط تیره و پرانتز هم مشکلی نیست).
-     * شمارهٔ نامعتبر یا ساختگی (مثل 09111111111) null برمی‌گرداند.
+     * شمارهٔ موبایل را فقط وقتی می‌پذیرد که دقیقاً ۱۱ رقم باشد و با 09 شروع شود.
+     * شمارهٔ ساختگی (مثل 09111111111) هم رد می‌شود.
+     *
+     * @return شمارهٔ استاندارد (ارقام انگلیسی) یا null اگر نامعتبر باشد
      */
     public static String normalizeMobile(String raw) {
-        String s = normalizeDigits(raw).replaceAll("[\\s\\-()]", "");
-        if (s.startsWith("+98")) s = "0" + s.substring(3);
-        else if (s.startsWith("0098")) s = "0" + s.substring(4);
-        else if (s.startsWith("98") && s.length() == 12) s = "0" + s.substring(2);
-        else if (s.startsWith("9") && s.length() == 10) s = "0" + s;
+        String s = normalizeDigits(raw).trim();
         if (!s.matches("09\\d{9}")) return null;
-        // رد شمارهٔ ساختگی: ۹ رقم آخر همه یکی باشند (مثل 09111111111)
+        // رد شمارهٔ ساختگی: ۹ رقم آخر همه یکی باشند
         if (s.substring(2).matches("(\\d)\\1{8}")) return null;
         return s;
+    }
+
+    /**
+     * متن گفتاری را به رقم تبدیل می‌کند. هم رقم (۰۹۱۲ یا 0912) و هم کلمه
+     * (صفر، یک، دو، ... نه) را می‌فهمد و بقیه را نادیده می‌گیرد.
+     * مثال: «صفر نه یک دو ۳۴۵ 6789» ← 09123456789
+     */
+    public static String spokenToDigits(String raw) {
+        if (raw == null) return "";
+        String s = normalizeDigits(raw)
+                .replace('ي', 'ی')   // ي عربی -> ی
+                .replace('ك', 'ک');  // ك عربی -> ک
+        StringBuilder out = new StringBuilder();
+        for (String token : s.split("[\\s,.\\-،]+")) {
+            if (token.isEmpty()) continue;
+            if (token.matches("\\d+")) {
+                out.append(token);
+                continue;
+            }
+            int d = wordToDigit(token);
+            if (d >= 0) out.append(d);
+        }
+        return out.toString();
+    }
+
+    private static int wordToDigit(String w) {
+        switch (w) {
+            case "صفر": return 0;                    // صفر
+            case "یک": return 1;                          // یک
+            case "دو": return 2;                          // دو
+            case "سه": return 3;                          // سه
+            case "چهار": return 4;              // چهار
+            case "پنج": return 5;                    // پنج
+            case "شش": return 6;                          // شش
+            case "هفت": return 7;                    // هفت
+            case "هشت": return 8;                    // هشت
+            case "نه": return 9;                          // نه
+            default: return -1;
+        }
+    }
+
+    /**
+     * از متن گفتاری نوع بسته را تشخیص می‌دهد.
+     *
+     * @return «بسته» یا «پاکت»، یا null اگر تشخیص داده نشد
+     */
+    public static String matchPackage(String raw) {
+        if (raw == null) return null;
+        String s = raw.replace('ي', 'ی').replace('ك', 'ک');
+        if (s.contains("پاکت")) return "پاکت"; // پاکت
+        if (s.contains("بسته")) return "بسته"; // بسته
+        return null;
     }
 
     /** نام امن برای فایل: حروف/ارقام (از جمله فارسی)، فاصله، خط تیره و زیرخط. */
@@ -42,7 +90,7 @@ public final class Util {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             if (Character.isLetterOrDigit(c) || c == '-' || c == '_') sb.append(c);
-            else if (c == ' ' || c == '/' || c == ':' || c == '\u200c') sb.append('_');
+            else if (c == ' ' || c == '/' || c == ':' || c == '‌') sb.append('_');
         }
         String r = sb.toString().replaceAll("_+", "_");
         r = r.replaceAll("^_+|_+$", "");
