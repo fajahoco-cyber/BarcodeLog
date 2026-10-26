@@ -160,6 +160,13 @@ public class RecordFormActivity extends BaseActivity {
             tilBarcode.setError(getString(R.string.barcode_required));
             return;
         }
+        // شمارهٔ تلفن اختیاری است؛ اگر وارد شده باید موبایل معتبر ایران باشد
+        String rawPhone = text(etPhone).trim();
+        if (!rawPhone.isEmpty() && Util.normalizeMobile(rawPhone) == null) {
+            etPhone.setError("شمارهٔ موبایل معتبر نیست (مثال: 09123456789)");
+            etPhone.requestFocus();
+            return;
+        }
         if (Db.get(this).barcodeExists(fileId, barcode, recordId)) {
             new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.duplicate_title)
@@ -182,7 +189,8 @@ public class RecordFormActivity extends BaseActivity {
         r.lastName = "";
         r.packageType = text(etPackage).trim();
         r.description = text(etDesc).trim();
-        r.phone = Util.normalizeDigits(text(etPhone)).trim();
+        String mobile = Util.normalizeMobile(text(etPhone));
+        r.phone = mobile != null ? mobile : ""; // همیشه به شکل 09xxxxxxxxx ذخیره می‌شود
 
         Db db = Db.get(this);
         if (recordId == 0) db.insertRecord(r);
