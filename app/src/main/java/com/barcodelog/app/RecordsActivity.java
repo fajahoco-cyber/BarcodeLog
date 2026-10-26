@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -38,7 +37,7 @@ public class RecordsActivity extends BaseActivity {
     private final List<Db.Record> items = new ArrayList<>();
     private RecordAdapter adapter;
     private ListView listView;
-    private TextView txtEmpty;
+    private View emptyView;
     private TextView txtCount;
 
     @Override
@@ -47,12 +46,9 @@ public class RecordsActivity extends BaseActivity {
         setContentView(R.layout.activity_records);
 
         fileId = getIntent().getLongExtra(EXTRA_FILE_ID, 0);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
         listView = findViewById(R.id.listRecords);
-        txtEmpty = findViewById(R.id.txtEmpty);
+        emptyView = findViewById(R.id.emptyView);
         txtCount = findViewById(R.id.txtCount);
         MaterialButton btnAdd = findViewById(R.id.btnAdd);
         MaterialButton btnShare = findViewById(R.id.btnShare);
@@ -79,22 +75,13 @@ public class RecordsActivity extends BaseActivity {
         reload();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void reload() {
         items.clear();
         items.addAll(Db.get(this).listRecords(fileId));
         adapter.notifyDataSetChanged();
         txtCount.setText(getString(R.string.records_count, items.size()));
         boolean empty = items.isEmpty();
-        txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(empty ? View.VISIBLE : View.GONE);
         listView.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
@@ -133,8 +120,7 @@ public class RecordsActivity extends BaseActivity {
                     String.valueOf(n++),
                     r.barcode,
                     fmt,
-                    r.firstName,
-                    r.lastName,
+                    r.fullName(),
                     r.packageType,
                     r.description,
                     r.phone,
@@ -142,7 +128,7 @@ public class RecordsActivity extends BaseActivity {
             });
         }
         String[] headers = getResources().getStringArray(R.array.excel_headers);
-        double[] widths = {6, 26, 14, 16, 18, 14, 36, 16, 18};
+        double[] widths = {6, 26, 14, 26, 12, 36, 16, 18};
         XlsxWriter.write(os, fileName, headers, rows, widths);
     }
 
@@ -224,22 +210,40 @@ public class RecordsActivity extends BaseActivity {
                     : LayoutInflater.from(RecordsActivity.this).inflate(R.layout.item_record, parent, false);
             Db.Record r = items.get(position);
 
-            String name = (r.firstName + " " + r.lastName).trim();
-            if (name.isEmpty()) name = getString(R.string.no_name);
-            String title = (position + 1) + ".  " + name;
-            if (!r.packageType.isEmpty()) title += "  •  " + r.packageType;
-            ((TextView) v.findViewById(R.id.txtTitle)).setText(title);
+            ((TextView) v.findViewById(R.id.txtIndex)).setText(String.valueOf(position + 1));
+
+            String name = r.fullName();
+            ((TextView) v.findViewById(R.id.txtName)).setText(name.isEmpty() ? getString(R.string.no_name) : name);
             ((TextView) v.findViewById(R.id.txtBarcode)).setText(r.barcode);
 
             StringBuilder d = new StringBuilder();
             if (!r.phone.isEmpty()) d.append(r.phone);
             if (!r.description.isEmpty()) {
-                if (d.length() > 0) d.append("  —  ");
+                if (d.length() > 0) d.append("  •  ");
                 d.append(r.description.replace('\n', ' '));
             }
             TextView details = v.findViewById(R.id.txtDetails);
             details.setText(d.toString());
             details.setVisibility(d.length() == 0 ? View.GONE : View.VISIBLE);
+
+            // برچسب رنگی نوع بسته
+            TextView pack = v.findViewById(R.id.txtPack);
+            if (r.packageType.isEmpty()) {
+                pack.setVisibility(View.GONE);
+            } else {
+                pack.setVisibility(View.VISIBLE);
+                pack.setText(r.packageType);
+                if (r.packageType.equals(getString(R.string.package_envelope))) {
+                    pack.setBackgroundResource(R.drawable.bg_pill_env);
+                    pack.setTextColor(getResources().getColor(R.color.env_text));
+                } else if (r.packageType.equals(getString(R.string.package_parcel))) {
+                    pack.setBackgroundResource(R.drawable.bg_pill_pack);
+                    pack.setTextColor(getResources().getColor(R.color.pack_text));
+                } else {
+                    pack.setBackgroundResource(R.drawable.bg_pill_neutral);
+                    pack.setTextColor(getResources().getColor(R.color.neutral_text));
+                }
+            }
             return v;
         }
     }

@@ -30,6 +30,11 @@ public class Db extends SQLiteOpenHelper {
         public String packageType = "";
         public String description = "";
         public String phone = "";
+
+        /** نام کامل؛ رکوردهای قدیمی که نام و فامیل جدا داشتند هم پشتیبانی می‌شوند. */
+        public String fullName() {
+            return (firstName + " " + lastName).trim();
+        }
     }
 
     private static final String DB_NAME = "barcodelog.db";

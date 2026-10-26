@@ -11,8 +11,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,17 +23,16 @@ public class MainActivity extends BaseActivity {
     private final List<Db.FileItem> items = new ArrayList<>();
     private FileAdapter adapter;
     private ListView listView;
-    private TextView txtEmpty;
+    private View emptyView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setTitle(R.string.app_name);
 
         listView = findViewById(R.id.listFiles);
-        txtEmpty = findViewById(R.id.txtEmpty);
-        MaterialButton btnNew = findViewById(R.id.btnNewFile);
+        emptyView = findViewById(R.id.emptyView);
+        ExtendedFloatingActionButton btnNew = findViewById(R.id.btnNewFile);
 
         adapter = new FileAdapter();
         listView.setAdapter(adapter);
@@ -57,7 +56,7 @@ public class MainActivity extends BaseActivity {
         items.addAll(Db.get(this).listFiles());
         adapter.notifyDataSetChanged();
         boolean empty = items.isEmpty();
-        txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(empty ? View.VISIBLE : View.GONE);
         listView.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
@@ -144,8 +143,8 @@ public class MainActivity extends BaseActivity {
                     : LayoutInflater.from(MainActivity.this).inflate(R.layout.item_file, parent, false);
             Db.FileItem f = items.get(position);
             ((TextView) v.findViewById(R.id.txtName)).setText(f.name);
-            ((TextView) v.findViewById(R.id.txtInfo)).setText(
-                    getString(R.string.file_info, f.count, Jalali.formatDateTime(f.created)));
+            ((TextView) v.findViewById(R.id.txtInfo)).setText(Jalali.formatDateTime(f.created));
+            ((TextView) v.findViewById(R.id.txtCount)).setText(getString(R.string.file_count, f.count));
             return v;
         }
     }

@@ -3,10 +3,10 @@ package com.barcodelog.app;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -18,12 +18,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
-/** فرم ثبت/ویرایش یک رکورد: اسکن بارکد + نام، نام خانوادگی، نوع بسته، توضیحات، تلفن. */
+/** فرم ثبت/ویرایش یک رکورد: اسکن بارکد + نام و نام خانوادگی، نوع بسته، تلفن، توضیحات. */
 public class RecordFormActivity extends BaseActivity {
 
     public static final String EXTRA_FILE_ID = "file_id";
@@ -34,12 +29,11 @@ public class RecordFormActivity extends BaseActivity {
 
     private TextInputLayout tilBarcode;
     private TextInputEditText etBarcode;
-    private TextInputEditText etFirst;
-    private TextInputEditText etLast;
+    private TextInputEditText etName;
     private TextInputEditText etDesc;
     private TextInputEditText etPhone;
     private AutoCompleteTextView etPackage;
-    private android.widget.TextView txtFormat;
+    private TextView txtFormat;
 
     /** نوع بارکدی که اسکنر تشخیص داده (مثل EAN_13)؛ برای ورود دستی خالی است */
     private String format = "";
@@ -53,7 +47,7 @@ public class RecordFormActivity extends BaseActivity {
                 format = result.getFormatName() == null ? "" : result.getFormatName();
                 etBarcode.setText(scannedValue);
                 refreshFormatLabel();
-                etFirst.requestFocus();
+                etName.requestFocus();
             });
 
     @Override
@@ -63,14 +57,10 @@ public class RecordFormActivity extends BaseActivity {
 
         fileId = getIntent().getLongExtra(EXTRA_FILE_ID, 0);
         recordId = getIntent().getLongExtra(EXTRA_RECORD_ID, 0);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
         tilBarcode = findViewById(R.id.tilBarcode);
         etBarcode = findViewById(R.id.etBarcode);
-        etFirst = findViewById(R.id.etFirst);
-        etLast = findViewById(R.id.etLast);
+        etName = findViewById(R.id.etName);
         etDesc = findViewById(R.id.etDesc);
         etPhone = findViewById(R.id.etPhone);
         etPackage = findViewById(R.id.etPackage);
@@ -111,19 +101,11 @@ public class RecordFormActivity extends BaseActivity {
             btnDelete.setVisibility(View.VISIBLE);
         } else {
             setTitle(R.string.form_title_new);
+            etPackage.setText(getString(R.string.package_parcel), false);
             refreshFormatLabel();
             // رکورد جدید: بلافاصله اسکنر را باز کن
             if (savedInstanceState == null) etBarcode.post(this::launchScan);
         }
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     // ------------------------------------------------------------ اسکن
@@ -147,19 +129,11 @@ public class RecordFormActivity extends BaseActivity {
         txtFormat.setText(getString(R.string.format_label, f));
     }
 
-    // ------------------------------------------------------------ لیست انواع بسته
+    // ------------------------------------------------------------ نوع بسته (فقط «بسته» و «پاکت»)
 
     private void setupPackageDropdown() {
-        Set<String> all = new LinkedHashSet<>(Db.get(this).recentPackageTypes());
-        for (String s : getResources().getStringArray(R.array.default_packages)) all.add(s);
-        ArrayAdapter<String> a = new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, new ArrayList<>(all));
-        etPackage.setAdapter(a);
-        etPackage.setThreshold(0);
-        etPackage.setOnClickListener(v -> etPackage.showDropDown());
-        etPackage.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) etPackage.showDropDown();
-        });
+        String[] types = getResources().getStringArray(R.array.package_types);
+        etPackage.setAdapter(new ArrayAdapter<>(this, R.layout.item_dropdown, types));
     }
 
     // ------------------------------------------------------------ بارگذاری/ذخیره
@@ -173,8 +147,7 @@ public class RecordFormActivity extends BaseActivity {
         scannedValue = r.barcode;
         format = r.format == null ? "" : r.format;
         etBarcode.setText(r.barcode);
-        etFirst.setText(r.firstName);
-        etLast.setText(r.lastName);
+        etName.setText(r.fullName());
         etPackage.setText(r.packageType, false);
         etDesc.setText(r.description);
         etPhone.setText(r.phone);
@@ -205,8 +178,8 @@ public class RecordFormActivity extends BaseActivity {
         r.fileId = fileId;
         r.barcode = text(etBarcode).trim();
         r.format = format;
-        r.firstName = text(etFirst).trim();
-        r.lastName = text(etLast).trim();
+        r.firstName = text(etName).trim(); // نام کامل در یک فیلد
+        r.lastName = "";
         r.packageType = text(etPackage).trim();
         r.description = text(etDesc).trim();
         r.phone = Util.normalizeDigits(text(etPhone)).trim();
@@ -228,9 +201,8 @@ public class RecordFormActivity extends BaseActivity {
         scannedValue = "";
         format = "";
         etBarcode.setText("");
-        etFirst.setText("");
-        etLast.setText("");
-        etPackage.setText("", false);
+        etName.setText("");
+        etPackage.setText(getString(R.string.package_parcel), false);
         etDesc.setText("");
         etPhone.setText("");
         tilBarcode.setError(null);

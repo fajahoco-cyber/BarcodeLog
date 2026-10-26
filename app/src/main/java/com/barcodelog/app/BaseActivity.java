@@ -9,14 +9,34 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-/** پایهٔ همهٔ صفحه‌ها: اجبار چیدمان راست‌به‌چپ و چند تابع کمکی. */
+/**
+ * پایهٔ همهٔ صفحه‌ها: اجبار چیدمان راست‌به‌چپ، مدیریت هدر سفارشی
+ * (عنوان + دکمهٔ بازگشت) و چند تابع کمکی.
+ */
 public abstract class BaseActivity extends AppCompatActivity {
+
+    private TextView headerTitle;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // حتی اگر زبان گوشی انگلیسی باشد، برنامه راست‌به‌چپ نمایش داده شود
         getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    }
+
+    @Override
+    public void onContentChanged() {
+        super.onContentChanged();
+        headerTitle = findViewById(R.id.headerTitle);
+        if (headerTitle != null) headerTitle.setText(getTitle());
+        View back = findViewById(R.id.btnBack);
+        if (back != null) back.setOnClickListener(v -> finish());
+    }
+
+    @Override
+    protected void onTitleChanged(CharSequence title, int color) {
+        super.onTitleChanged(title, color);
+        if (headerTitle != null) headerTitle.setText(title);
     }
 
     protected int dp(int v) {
