@@ -37,7 +37,9 @@ public class MainActivity extends BaseActivity {
         adapter = new FileAdapter();
         listView.setAdapter(adapter);
 
-        btnNew.setOnClickListener(v -> askFileName(null));
+        btnNew.setOnClickListener(v -> askFileName(null, false));
+        ExtendedFloatingActionButton btnQuick = findViewById(R.id.btnQuickScan);
+        btnQuick.setOnClickListener(v -> askFileName(null, true));
         listView.setOnItemClickListener((parent, view, position, id) -> openFile(items.get(position)));
         listView.setOnItemLongClickListener((parent, view, position, id) -> {
             showFileMenu(items.get(position));
@@ -61,24 +63,31 @@ public class MainActivity extends BaseActivity {
     }
 
     private void openFile(Db.FileItem f) {
+        // فایل «فقط اسکن» هم با همان لیست باز می‌شود (لیست ساده + ادامهٔ اسکن)
         Intent i = new Intent(this, RecordsActivity.class);
         i.putExtra(RecordsActivity.EXTRA_FILE_ID, f.id);
         startActivity(i);
     }
 
-    /** @param existing اگر null باشد فایل جدید ساخته می‌شود، وگرنه تغییر نام */
-    private void askFileName(Db.FileItem existing) {
+    /**
+     * @param existing اگر null باشد فایل جدید ساخته می‌شود، وگرنه تغییر نام
+     * @param quick    اگر true باشد، بعد از ساخت فایل مستقیم وارد اسکن سریع و پیوسته می‌شود
+     */
+    private void askFileName(Db.FileItem existing, boolean quick) {
         EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         input.setSingleLine(true);
         input.setHint(R.string.file_name_hint);
+        String prefix = getString(quick ? R.string.quick_default_prefix : R.string.default_file_prefix);
         String initial = existing != null ? existing.name
-                : getString(R.string.default_file_prefix) + " " + Jalali.formatDate(System.currentTimeMillis());
+                : prefix + " " + Jalali.formatDate(System.currentTimeMillis());
         input.setText(initial);
         input.selectAll();
 
+        int titleRes = existing != null ? R.string.rename_file
+                : (quick ? R.string.quick_scan_title : R.string.new_file_title);
         new MaterialAlertDialogBuilder(this)
-                .setTitle(existing != null ? R.string.rename_file : R.string.new_file_title)
+                .setTitle(titleRes)
                 .setView(dialogInput(input))
                 .setPositiveButton(R.string.ok, (d, w) -> {
                     String name = text(input).trim();
@@ -88,9 +97,10 @@ public class MainActivity extends BaseActivity {
                         db.renameFile(existing.id, name);
                         reload();
                     } else {
-                        long id = db.addFile(name);
-                        Intent i = new Intent(this, RecordsActivity.class);
-                        i.putExtra(RecordsActivity.EXTRA_FILE_ID, id);
+                        long id = db.addFile(name, quick ? Db.TYPE_SCAN_ONLY : Db.TYPE_DETAILED);
+                        Intent i = new Intent(this,
+                                quick ? ContinuousScanActivity.class : RecordsActivity.class);
+                        i.putExtra(RecordsActivity.EXTRA_FILE_ID, id); // همان کلید "file_id"
                         startActivity(i);
                     }
                 })
@@ -103,7 +113,7 @@ public class MainActivity extends BaseActivity {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(f.name)
                 .setItems(options, (d, which) -> {
-                    if (which == 0) askFileName(f);
+                    if (which == 0) askFileName(f, false);
                     else confirmDelete(f);
                 })
                 .show();
@@ -143,7 +153,9 @@ public class MainActivity extends BaseActivity {
                     : LayoutInflater.from(MainActivity.this).inflate(R.layout.item_file, parent, false);
             Db.FileItem f = items.get(position);
             ((TextView) v.findViewById(R.id.txtName)).setText(f.name);
-            ((TextView) v.findViewById(R.id.txtInfo)).setText(Jalali.formatDateTime(f.created));
+            String info = Jalali.formatDateTime(f.created);
+            if (f.type == Db.TYPE_SCAN_ONLY) info += "  •  " + getString(R.string.scan_only_tag);
+            ((TextView) v.findViewById(R.id.txtInfo)).setText(info);
             ((TextView) v.findViewById(R.id.txtCount)).setText(getString(R.string.file_count, f.count));
             return v;
         }

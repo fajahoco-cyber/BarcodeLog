@@ -17,7 +17,14 @@ public class Db extends SQLiteOpenHelper {
         public String name;
         public long created;
         public int count;
+        /** نوع فایل: TYPE_DETAILED یا TYPE_SCAN_ONLY */
+        public int type;
     }
+
+    /** فایل با اطلاعات (بارکد + فرستنده، تلفن، نوع مرسوله، توضیحات) */
+    public static final int TYPE_DETAILED = 0;
+    /** فایل «فقط اسکن»: فقط لیست بارکدها */
+    public static final int TYPE_SCAN_ONLY = 1;
 
     public static class Record {
         public long id;
@@ -38,7 +45,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String DB_NAME = "barcodelog.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
     private static final String REC_COLS =
             "id, file_id, barcode, format, first_name, last_name, package_type, description, phone, created";
 
@@ -56,7 +63,8 @@ public class Db extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE files (id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "name TEXT NOT NULL, created INTEGER NOT NULL)");
+                + "name TEXT NOT NULL, created INTEGER NOT NULL, "
+                + "type INTEGER NOT NULL DEFAULT 0)");
         db.execSQL("CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "file_id INTEGER NOT NULL, barcode TEXT NOT NULL, format TEXT, "
                 + "first_name TEXT, last_name TEXT, package_type TEXT, description TEXT, "
@@ -66,16 +74,34 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // نسخهٔ اول؛ فعلاً مهاجرتی لازم نیست.
+        // نسخهٔ ۲: نوع فایل (با اطلاعات / فقط اسکن). فایل‌های قبلی همه «با اطلاعات» می‌مانند.
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE files ADD COLUMN type INTEGER NOT NULL DEFAULT 0");
+        }
     }
 
     // ---------------------------------------------------------------- فایل‌ها
 
     public long addFile(String name) {
+        return addFile(name, TYPE_DETAILED);
+    }
+
+    public long addFile(String name, int type) {
         ContentValues v = new ContentValues();
         v.put("name", name);
         v.put("created", System.currentTimeMillis());
+        v.put("type", type);
         return getWritableDatabase().insert("files", null, v);
+    }
+
+    public int getFileType(long id) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT type FROM files WHERE id=?", new String[]{String.valueOf(id)});
+        try {
+            return c.moveToFirst() ? c.getInt(0) : TYPE_DETAILED;
+        } finally {
+            c.close();
+        }
     }
 
     public void renameFile(long id, String name) {
@@ -100,7 +126,7 @@ public class Db extends SQLiteOpenHelper {
         List<FileItem> out = new ArrayList<>();
         Cursor c = getReadableDatabase().rawQuery(
                 "SELECT f.id, f.name, f.created, "
-                        + "(SELECT COUNT(*) FROM records r WHERE r.file_id = f.id) "
+                        + "(SELECT COUNT(*) FROM records r WHERE r.file_id = f.id), f.type "
                         + "FROM files f ORDER BY f.created DESC, f.id DESC", null);
         try {
             while (c.moveToNext()) {
@@ -109,6 +135,7 @@ public class Db extends SQLiteOpenHelper {
                 f.name = str(c, 1);
                 f.created = c.getLong(2);
                 f.count = c.getInt(3);
+                f.type = c.getInt(4);
                 out.add(f);
             }
         } finally {

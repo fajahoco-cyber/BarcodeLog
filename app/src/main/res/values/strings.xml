@@ -5,10 +5,10 @@
 
     <!-- صفحهٔ فایل‌ها -->
     <string name="my_files">فایل‌های من</string>
-    <string name="new_file">فایل جدید</string>
+    <string name="new_file">ثبت با اطلاعات</string>
     <string name="no_files">هنوز فایلی ندارید</string>
     <string name="no_files_hint">با دکمهٔ «فایل جدید» اولین فایل را بسازید و بارکدها را یکی‌یکی ثبت کنید.</string>
-    <string name="new_file_title">فایل جدید</string>
+    <string name="new_file_title">ثبت با اطلاعات — نام فایل</string>
     <string name="file_name_hint">نام فایل</string>
     <string name="rename_file">تغییر نام</string>
     <string name="delete">حذف</string>
@@ -67,12 +67,30 @@
     <!-- سرستون‌های اکسل -->
     <string-array name="excel_headers">
         <item>ردیف</item>
-        <item>بارکد</item>
         <item>نوع بارکد</item>
-        <item>نام و نام خانوادگی</item>
-        <item>نوع بسته</item>
+        <item>بارکد</item>
+        <item>فرستنده</item>
+        <item>شماره تماس</item>
+        <item>نوع مرسوله</item>
         <item>توضیحات</item>
-        <item>شماره تلفن</item>
-        <item>تاریخ ثبت</item>
     </string-array>
+
+    <!-- اسکن سریع -->
+    <string name="quick_scan">فقط اسکن</string>
+    <string name="quick_scan_title">فقط اسکن — نام فایل</string>
+    <string name="quick_default_prefix">لیست بارکد</string>
+    <string name="continue_scan">ادامهٔ اسکن</string>
+    <string name="scan_only_tag">فقط بارکد</string>
+    <string-array name="excel_headers_scan_only">
+        <item>ردیف</item>
+        <item>نوع بارکد</item>
+        <item>بارکد</item>
+    </string-array>
+    <string name="quick_hint">بارکد را مقابل دوربین بگیرید؛ خودکار ثبت می‌شود</string>
+    <string name="quick_finish">پایان و خروجی اکسل</string>
+    <string name="quick_torch">چراغ قوه</string>
+    <string name="quick_ready">آمادهٔ اسکن…</string>
+    <string name="quick_saved">ثبت شد: %1$s</string>
+    <string name="quick_duplicate">تکراری (ثبت نشد): %1$s</string>
+    <string name="quick_camera_denied">برای اسکن، دسترسی دوربین لازم است.</string>
 </resources>

@@ -28,11 +28,17 @@ import java.util.List;
 public class RecordsActivity extends BaseActivity {
 
     public static final String EXTRA_FILE_ID = "file_id";
+    /** اگر true باشد، به‌محض باز شدن صفحه منوی اشتراک اکسل خودکار باز می‌شود (پایان اسکن سریع) */
+    public static final String EXTRA_AUTO_SHARE = "auto_share";
     private static final String XLSX_MIME =
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     private static final int REQ_SAVE_EXCEL = 4001;
 
     private long fileId;
+    private boolean autoShare;
+    /** فایل «فقط اسکن»: فقط لیست بارکدها، بدون فرم و اطلاعات جانبی */
+    private boolean scanOnly;
+    private MaterialButton btnAdd;
     private String fileName = "";
     private final List<Db.Record> items = new ArrayList<>();
     private RecordAdapter adapter;
@@ -46,19 +52,26 @@ public class RecordsActivity extends BaseActivity {
         setContentView(R.layout.activity_records);
 
         fileId = getIntent().getLongExtra(EXTRA_FILE_ID, 0);
+        autoShare = savedInstanceState == null
+                && getIntent().getBooleanExtra(EXTRA_AUTO_SHARE, false);
 
         listView = findViewById(R.id.listRecords);
         emptyView = findViewById(R.id.emptyView);
         txtCount = findViewById(R.id.txtCount);
-        MaterialButton btnAdd = findViewById(R.id.btnAdd);
+        btnAdd = findViewById(R.id.btnAdd);
         MaterialButton btnShare = findViewById(R.id.btnShare);
         MaterialButton btnSaveExcel = findViewById(R.id.btnSaveExcel);
 
         adapter = new RecordAdapter();
         listView.setAdapter(adapter);
 
-        btnAdd.setOnClickListener(v -> openForm(0));
-        listView.setOnItemClickListener((parent, view, position, id) -> openForm(items.get(position).id));
+        btnAdd.setOnClickListener(v -> {
+            if (scanOnly) openContinuousScan();
+            else openForm(0);
+        });
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            if (!scanOnly) openForm(items.get(position).id); // در «فقط اسکن» فرم ویرایش ندارد
+        });
         listView.setOnItemLongClickListener((parent, view, position, id) -> {
             confirmDelete(items.get(position));
             return true;
@@ -71,8 +84,14 @@ public class RecordsActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         fileName = Db.get(this).getFileName(fileId);
+        scanOnly = Db.get(this).getFileType(fileId) == Db.TYPE_SCAN_ONLY;
+        btnAdd.setText(scanOnly ? R.string.continue_scan : R.string.add_record);
         setTitle(fileName);
         reload();
+        if (autoShare) {
+            autoShare = false; // فقط یک بار
+            listView.post(this::shareExcel);
+        }
     }
 
     private void reload() {
@@ -89,6 +108,13 @@ public class RecordsActivity extends BaseActivity {
         Intent i = new Intent(this, RecordFormActivity.class);
         i.putExtra(RecordFormActivity.EXTRA_FILE_ID, fileId);
         i.putExtra(RecordFormActivity.EXTRA_RECORD_ID, recordId);
+        startActivity(i);
+    }
+
+    /** ادامهٔ اسکن پیوسته روی همین فایل («فقط اسکن») */
+    private void openContinuousScan() {
+        Intent i = new Intent(this, ContinuousScanActivity.class);
+        i.putExtra(ContinuousScanActivity.EXTRA_FILE_ID, fileId);
         startActivity(i);
     }
 
@@ -116,19 +142,26 @@ public class RecordsActivity extends BaseActivity {
         int n = 1;
         for (Db.Record r : recs) {
             String fmt = r.format == null || r.format.isEmpty() ? getString(R.string.format_manual) : r.format;
-            rows.add(new String[]{
-                    String.valueOf(n++),
-                    r.barcode,
-                    fmt,
-                    r.fullName(),
-                    r.packageType,
-                    r.description,
-                    r.phone,
-                    Jalali.formatDateTime(r.created)
-            });
+            if (scanOnly) {
+                // «فقط اسکن»: ردیف، نوع بارکد، بارکد
+                rows.add(new String[]{String.valueOf(n++), fmt, r.barcode});
+            } else {
+                // ردیف، نوع بارکد، بارکد، فرستنده، شماره تماس، نوع مرسوله، توضیحات
+                rows.add(new String[]{
+                        String.valueOf(n++),
+                        fmt,
+                        r.barcode,
+                        r.fullName(),
+                        r.phone,
+                        r.packageType,
+                        r.description
+                });
+            }
         }
-        String[] headers = getResources().getStringArray(R.array.excel_headers);
-        double[] widths = {6, 26, 14, 26, 12, 36, 16, 18};
+        String[] headers = getResources().getStringArray(
+                scanOnly ? R.array.excel_headers_scan_only : R.array.excel_headers);
+        double[] widths = scanOnly ? new double[]{6, 14, 40}
+                : new double[]{6, 14, 30, 26, 16, 14, 40};
         XlsxWriter.write(os, fileName, headers, rows, widths);
     }
 
@@ -211,6 +244,21 @@ public class RecordsActivity extends BaseActivity {
             Db.Record r = items.get(position);
 
             ((TextView) v.findViewById(R.id.txtIndex)).setText(String.valueOf(position + 1));
+
+            if (scanOnly) {
+                // «فقط اسکن»: خود بارکد تیتر است، زیرش نوع بارکد؛ بدون نام، بسته و توضیحات
+                TextView title = v.findViewById(R.id.txtName);
+                title.setText(r.barcode);
+                title.setTextDirection(View.TEXT_DIRECTION_LTR);
+                title.setGravity(android.view.Gravity.START);
+                ((TextView) v.findViewById(R.id.txtBarcode)).setText(
+                        r.format == null || r.format.isEmpty() ? getString(R.string.format_manual) : r.format);
+                v.findViewById(R.id.txtDetails).setVisibility(View.GONE);
+                v.findViewById(R.id.txtPack).setVisibility(View.GONE);
+                return v;
+            }
+            // حالت با اطلاعات (ممکن است ویوی بازیافتی از حالت قبل باشد؛ جهت متن را برگردان)
+            ((TextView) v.findViewById(R.id.txtName)).setTextDirection(View.TEXT_DIRECTION_INHERIT);
 
             String name = r.fullName();
             ((TextView) v.findViewById(R.id.txtName)).setText(name.isEmpty() ? getString(R.string.no_name) : name);
